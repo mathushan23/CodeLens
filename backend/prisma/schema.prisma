@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ReviewStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum IssueType {
+  SECURITY
+  BUG
+  COMPLEXITY
+  STYLE
+}
+
+enum IssueSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  githubId   String   @unique
+  username   String
+  email      String?
+  avatarUrl  String?
+  createdAt  DateTime @default(now())
+  reviews    Review[]
+}
+
+model Review {
+  id            Int          @id @default(autoincrement())
+  user          User         @relation(fields: [userId], references: [id])
+  userId        Int
+  prUrl         String
+  repoName      String
+  prNumber      Int
+  prTitle       String
+  branchFrom    String
+  branchTo      String
+  score         Int
+  summary       String
+  filesReviewed Int
+  linesAdded    Int
+  linesRemoved  Int
+  status        ReviewStatus @default(PENDING)
+  rawResponse   Json?
+  createdAt     DateTime     @default(now())
+  issues        Issue[]
+}
+
+model Issue {
+  id          Int           @id @default(autoincrement())
+  review      Review        @relation(fields: [reviewId], references: [id])
+  reviewId    Int
+  type        IssueType
+  severity    IssueSeverity
+  title       String
+  filePath    String
+  lineNumber  Int
+  description String
+  suggestion  String
+  isResolved  Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+}

@@ -1,0 +1,25 @@
+import express from "express";
+import passport from "passport";
+import {
+  getCurrentUser,
+  githubAuthCallback,
+  githubAuthFailure,
+  logoutUser,
+} from "../controllers/authController.js";
+
+const router = express.Router();
+
+router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
+
+router.get(
+  "/github/callback",
+  passport.authenticate("github", { failureRedirect: "/auth/github/failure" }),
+  githubAuthCallback,
+);
+
+router.get("/github/failure", githubAuthFailure);
+
+router.get("/me", getCurrentUser);
+router.get("/logout", logoutUser);
+
+export default router;
