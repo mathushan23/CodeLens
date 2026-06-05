@@ -38,6 +38,28 @@ export function useReview({ isAuthenticated }) {
   const [isExporting, setIsExporting] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const eventSourceRef = useRef(null);
+  const actionToastTimeoutRef = useRef(null);
+
+  const clearActionToastTimeout = () => {
+    if (actionToastTimeoutRef.current) {
+      clearTimeout(actionToastTimeoutRef.current);
+      actionToastTimeoutRef.current = null;
+    }
+  };
+
+  const showActionToast = ({ message = "", error = "" }) => {
+    clearActionToastTimeout();
+    setActionMessage(message);
+    setActionError(error);
+
+    if (message || error) {
+      actionToastTimeoutRef.current = setTimeout(() => {
+        setActionMessage("");
+        setActionError("");
+        actionToastTimeoutRef.current = null;
+      }, 4500);
+    }
+  };
 
   const closeStream = () => {
     if (eventSourceRef.current) {
@@ -116,6 +138,7 @@ export function useReview({ isAuthenticated }) {
     return () => {
       isMounted = false;
       closeStream();
+      clearActionToastTimeout();
     };
   }, [isAuthenticated]);
 
@@ -123,8 +146,7 @@ export function useReview({ isAuthenticated }) {
     const safeUrl = nextUrl?.trim() || "";
     setPrUrl(safeUrl);
     setReviewError("");
-    setActionMessage("");
-    setActionError("");
+    showActionToast({});
 
     if (!isAuthenticated) {
       setReviewError("Sign in with GitHub before analyzing a pull request.");
@@ -161,8 +183,7 @@ export function useReview({ isAuthenticated }) {
     }
 
     setReviewError("");
-    setActionMessage("");
-    setActionError("");
+    showActionToast({});
     setIsProcessing(true);
 
     try {
@@ -183,12 +204,11 @@ export function useReview({ isAuthenticated }) {
 
   const exportCurrentReview = async () => {
     if (!review) {
-      setActionError("Analyze or open a review before exporting.");
+      showActionToast({ error: "Analyze or open a review before exporting." });
       return;
     }
 
-    setActionError("");
-    setActionMessage("");
+    showActionToast({});
     setIsExporting(true);
 
     try {
@@ -201,9 +221,9 @@ export function useReview({ isAuthenticated }) {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-      setActionMessage("Review PDF downloaded.");
+      showActionToast({ message: "Review PDF downloaded." });
     } catch (error) {
-      setActionError(error.message || "Failed to export review");
+      showActionToast({ error: error.message || "Failed to export review" });
     } finally {
       setIsExporting(false);
     }
@@ -211,27 +231,33 @@ export function useReview({ isAuthenticated }) {
 
   const postCurrentReview = async () => {
     if (!review) {
-      setActionError("Analyze or open a review before posting.");
+      showActionToast({ error: "Analyze or open a review before posting." });
       return;
     }
 
-    setActionError("");
-    setActionMessage("");
+    showActionToast({});
     setIsPosting(true);
 
     try {
       const result = await postReviewToPullRequest(review.id);
-      setActionMessage(result.message || "Review posted to GitHub.");
+      showActionToast({ message: result.message || "Review posted to GitHub." });
     } catch (error) {
-      setActionError(error.message || "Failed to post review to GitHub");
+      showActionToast({ error: error.message || "Failed to post review to GitHub" });
     } finally {
       setIsPosting(false);
     }
   };
 
+  const dismissActionToast = () => {
+    clearActionToastTimeout();
+    setActionMessage("");
+    setActionError("");
+  };
+
   return {
     actionError,
     actionMessage,
+    dismissActionToast,
     exportCurrentReview,
     history,
     historyError,
