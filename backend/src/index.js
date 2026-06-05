@@ -1,14 +1,22 @@
 import express from "express";
 import cors from "cors";
 import session from "express-session";
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import passport from "./middleware/passport.js";
 import { getHealth } from "./controllers/healthController.js";
+import { initializeSchema } from "./models/schema.js";
+import { testDatabaseConnection } from "./models/db.js";
 import authRoutes from "./routes/auth.js";
 import reviewRoutes from "./routes/review.js";
 import historyRoutes from "./routes/history.js";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, "..", "..", ".env");
+
+dotenv.config({ path: envPath });
 
 const app = express();
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
@@ -45,18 +53,30 @@ if (Number.isNaN(PORT) || PORT <= 0) {
   process.exit(1);
 }
 
-const server = app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await testDatabaseConnection();
+    await initializeSchema();
 
-server.on("error", (error) => {
-  if (error.code === "EADDRINUSE") {
-    console.error(
-      `Port ${PORT} is already in use. Stop the existing process or set a different PORT in your environment.`,
-    );
+    const server = app.listen(PORT, () => {
+      console.log(`Backend running on port ${PORT}`);
+    });
+
+    server.on("error", (error) => {
+      if (error.code === "EADDRINUSE") {
+        console.error(
+          `Port ${PORT} is already in use. Stop the existing process or set a different PORT in your environment.`,
+        );
+        process.exit(1);
+      }
+
+      console.error("Failed to start backend server:", error);
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error("Failed to connect to the database or initialize tables:", error.message);
     process.exit(1);
   }
+};
 
-  console.error("Failed to start backend server:", error);
-  process.exit(1);
-});
+startServer();

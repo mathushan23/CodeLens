@@ -47,7 +47,7 @@ export function ReviewCard({ review }) {
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Status</p>
-              <p className="mt-2 text-2xl text-white">Done</p>
+              <p className="mt-2 text-2xl capitalize text-white">{review.status}</p>
             </div>
           </div>
         </div>

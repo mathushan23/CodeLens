@@ -9,7 +9,7 @@ const severityStyles = {
   low: "text-[#b6ef89]",
 };
 
-export function HistoryTable({ history }) {
+export function HistoryTable({ history, onSelectReview, selectedReviewId }) {
   const [severityFilter, setSeverityFilter] = useState("all");
   const [repoFilter, setRepoFilter] = useState("");
 
@@ -60,20 +60,40 @@ export function HistoryTable({ history }) {
         </div>
 
         <div className="divide-y divide-white/10">
+          {filteredRows.length === 0 ? (
+            <div className="px-5 py-8 text-sm text-slate-400">No reviews match the current filters yet.</div>
+          ) : null}
           {filteredRows.map((item) => (
-            <div
+            <button
               key={item.id}
-              className="grid gap-4 px-5 py-4 md:grid-cols-[1.4fr_2fr_0.7fr_0.7fr_0.7fr] md:items-center"
+              className={`grid w-full gap-4 px-5 py-4 text-left transition md:grid-cols-[1.4fr_2fr_0.7fr_0.7fr_0.7fr] md:items-center ${
+                selectedReviewId === item.id ? "bg-white/10" : "hover:bg-white/5"
+              }`}
+              onClick={() => onSelectReview?.(item)}
+              type="button"
             >
               <div>
+                <p className="mb-1 text-[11px] uppercase tracking-[0.22em] text-slate-500 md:hidden">Repository</p>
                 <p className="text-sm text-white">{item.repoName}</p>
                 <p className="text-xs text-slate-500">{new Date(item.createdAt).toLocaleDateString()}</p>
               </div>
-              <p className="text-sm text-slate-200">{item.prTitle}</p>
-              <p className="text-sm text-slate-300">{item.issues}</p>
-              <p className={`text-sm capitalize ${severityStyles[item.severity]}`}>{item.severity}</p>
-              <p className="font-medium text-white">{item.score}</p>
-            </div>
+              <div>
+                <p className="mb-1 text-[11px] uppercase tracking-[0.22em] text-slate-500 md:hidden">Pull Request</p>
+                <p className="text-sm text-slate-200">{item.prTitle}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-[11px] uppercase tracking-[0.22em] text-slate-500 md:hidden">Issues</p>
+                <p className="text-sm text-slate-300">{item.issues}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-[11px] uppercase tracking-[0.22em] text-slate-500 md:hidden">Severity</p>
+                <p className={`text-sm capitalize ${severityStyles[item.severity]}`}>{item.severity}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-[11px] uppercase tracking-[0.22em] text-slate-500 md:hidden">Score</p>
+                <p className="font-medium text-white">{item.score}</p>
+              </div>
+            </button>
           ))}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import express from "express";
 import passport from "passport";
+import { githubAuthEnabled } from "../middleware/passport.js";
 import {
   getCurrentUser,
   githubAuthCallback,
@@ -9,10 +10,22 @@ import {
 
 const router = express.Router();
 
-router.get("/github", passport.authenticate("github", { scope: ["user:email"] }));
+const requireGithubAuth = (req, res, next) => {
+  if (githubAuthEnabled) {
+    return next();
+  }
+
+  return res.status(503).json({
+    error: "GitHub OAuth is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in the root .env file.",
+    code: "GITHUB_AUTH_NOT_CONFIGURED",
+  });
+};
+
+router.get("/github", requireGithubAuth, passport.authenticate("github", { scope: ["user:email"] }));
 
 router.get(
   "/github/callback",
+  requireGithubAuth,
   passport.authenticate("github", { failureRedirect: "/auth/github/failure" }),
   githubAuthCallback,
 );
