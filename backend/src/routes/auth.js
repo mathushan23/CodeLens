@@ -11,6 +11,30 @@ import {
 
 const router = express.Router();
 
+const trimTrailingSlash = (value = "") => value.replace(/\/+$/, "");
+
+const getServerBaseUrl = (req) => {
+  if (process.env.SERVER_URL) {
+    return trimTrailingSlash(process.env.SERVER_URL);
+  }
+
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const forwardedHost = req.headers["x-forwarded-host"];
+  const protocol = `${forwardedProto || req.protocol || "http"}`.split(",")[0].trim();
+  const host = `${forwardedHost || req.get("host") || `localhost:${process.env.PORT || 5000}`}`
+    .split(",")[0]
+    .trim();
+
+  return `${protocol}://${host}`;
+};
+
+const getGithubAuthOptions = (req, overrides = {}) => ({
+  scope: ["user:email"],
+  session: false,
+  callbackURL: `${getServerBaseUrl(req)}/auth/github/callback`,
+  ...overrides,
+});
+
 const requireGithubAuth = (req, res, next) => {
   if (githubAuthEnabled) {
     return next();
@@ -22,12 +46,18 @@ const requireGithubAuth = (req, res, next) => {
   });
 };
 
-router.get("/github", requireGithubAuth, passport.authenticate("github", { scope: ["user:email"], session: false }));
+router.get("/github", requireGithubAuth, (req, res, next) =>
+  passport.authenticate("github", getGithubAuthOptions(req))(req, res, next),
+);
 
 router.get(
   "/github/callback",
   requireGithubAuth,
-  passport.authenticate("github", { failureRedirect: "/auth/github/failure", session: false }),
+  (req, res, next) =>
+    passport.authenticate(
+      "github",
+      getGithubAuthOptions(req, { failureRedirect: "/auth/github/failure" }),
+    )(req, res, next),
   githubAuthCallback,
 );
 

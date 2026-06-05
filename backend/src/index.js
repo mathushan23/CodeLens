@@ -18,9 +18,25 @@ const envPath = path.resolve(__dirname, "..", "..", ".env");
 dotenv.config({ path: envPath });
 
 const app = express();
-const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const clientOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors({ origin: clientUrl, credentials: true }));
+app.set("trust proxy", 1);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || clientOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+    },
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(passport.initialize());
 

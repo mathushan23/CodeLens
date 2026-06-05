@@ -1,7 +1,6 @@
 import crypto from "crypto";
 
 const DEFAULT_EXPIRY_SECONDS = 60 * 60 * 24 * 7;
-const encoder = new TextEncoder();
 
 function toBase64Url(input) {
   return Buffer.from(input)
@@ -101,7 +100,7 @@ export function getAuthCookieOptions() {
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "lax",
+    sameSite: isProduction ? "none" : "lax",
     maxAge: DEFAULT_EXPIRY_SECONDS * 1000,
     path: "/",
   };
