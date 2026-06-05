@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import session from "express-session";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
@@ -23,20 +22,7 @@ const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
 app.use(cors({ origin: clientUrl, credentials: true }));
 app.use(express.json());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "supersecret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-      sameSite: "lax"
-    }
-  })
-);
 app.use(passport.initialize());
-app.use(passport.session());
 
 app.use("/auth", authRoutes);
 app.use("/api/review", reviewRoutes);

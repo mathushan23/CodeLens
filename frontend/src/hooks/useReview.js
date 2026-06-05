@@ -81,6 +81,10 @@ export function useReview({ isAuthenticated }) {
 
     const loadHistory = async () => {
       if (!isAuthenticated) {
+        closeStream();
+        setReview(null);
+        setPrUrl("");
+        setStreamedSummary("");
         setHistory([]);
         setHistoryError("");
         setHistoryLoading(false);

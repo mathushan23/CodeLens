@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getCurrentUser, getGithubLoginUrl, getLogoutUrl } from "../api/client";
+import { getCurrentUser, getGithubLoginUrl, logoutCurrentUser } from "../api/client";
 
 const guestUser = {
   name: "Guest Session",
@@ -12,6 +12,7 @@ export function useAuth() {
   const [user, setUser] = useState(guestUser);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -29,13 +30,15 @@ export function useAuth() {
           avatarUrl: currentUser.avatarUrl || guestUser.avatarUrl,
         });
         setIsAuthenticated(true);
-      } catch {
+        setAuthError("");
+      } catch (error) {
         if (!isMounted) {
           return;
         }
 
         setUser(guestUser);
         setIsAuthenticated(false);
+        setAuthError(error.code === "NOT_AUTHENTICATED" ? "" : error.message || "Failed to verify session");
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -50,11 +53,22 @@ export function useAuth() {
     };
   }, []);
 
+  const logout = async () => {
+    try {
+      await logoutCurrentUser();
+    } finally {
+      setUser(guestUser);
+      setIsAuthenticated(false);
+      setAuthError("");
+    }
+  };
+
   return {
+    authError,
     isAuthenticated,
     isLoading,
     loginUrl: getGithubLoginUrl(),
-    logoutUrl: getLogoutUrl(),
+    logout,
     user,
   };
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Home } from "./pages/Home";
 import { Review } from "./pages/Review";
@@ -17,6 +17,12 @@ export default function App() {
   const [activeView, setActiveView] = useState("home");
   const authState = useAuth();
   const reviewState = useReview({ isAuthenticated: authState.isAuthenticated });
+
+  useEffect(() => {
+    if (!authState.isLoading && !authState.isAuthenticated) {
+      setActiveView("home");
+    }
+  }, [authState.isAuthenticated, authState.isLoading]);
 
   const handleStartReview = (nextPrUrl) => {
     setActiveView("review");
@@ -118,12 +124,13 @@ export default function App() {
                   </div>
                 </div>
                 {authState.isLoading ? null : authState.isAuthenticated ? (
-                  <a
+                  <button
                     className="rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white"
-                    href={authState.logoutUrl}
+                    onClick={authState.logout}
+                    type="button"
                   >
                     Logout
-                  </a>
+                  </button>
                 ) : (
                   <a
                     className="rounded-xl bg-[#f46f42] px-3 py-2 text-xs text-white transition hover:bg-[#ff835a]"

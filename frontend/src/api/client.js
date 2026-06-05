@@ -32,6 +32,7 @@ export async function apiRequest(path, options = {}) {
 }
 
 export const getCurrentUser = () => apiRequest("/auth/me");
+export const logoutCurrentUser = () => apiRequest("/auth/logout", { method: "POST" });
 export const getReviewHistory = () => apiRequest("/api/history");
 export const analyzePullRequest = (prUrl) =>
   apiRequest("/api/review/analyze", { method: "POST", body: JSON.stringify({ prUrl }) });
@@ -40,7 +41,6 @@ export const postReviewToPullRequest = (reviewId) =>
   apiRequest(`/api/review/${reviewId}/post-to-pr`, { method: "POST" });
 export const getReviewStreamUrl = (reviewId) => `${API_BASE_URL}/api/review/${reviewId}/stream`;
 export const getGithubLoginUrl = () => `${API_BASE_URL}/auth/github`;
-export const getLogoutUrl = () => `${API_BASE_URL}/auth/logout`;
 
 export async function exportReviewPdf(reviewId) {
   const response = await fetch(`${API_BASE_URL}/api/review/${reviewId}/export`, {

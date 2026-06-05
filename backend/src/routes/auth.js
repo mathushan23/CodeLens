@@ -1,6 +1,7 @@
 import express from "express";
 import passport from "passport";
 import { githubAuthEnabled } from "../middleware/passport.js";
+import { attachAuthenticatedUser } from "../middleware/authMiddleware.js";
 import {
   getCurrentUser,
   githubAuthCallback,
@@ -21,18 +22,19 @@ const requireGithubAuth = (req, res, next) => {
   });
 };
 
-router.get("/github", requireGithubAuth, passport.authenticate("github", { scope: ["user:email"] }));
+router.get("/github", requireGithubAuth, passport.authenticate("github", { scope: ["user:email"], session: false }));
 
 router.get(
   "/github/callback",
   requireGithubAuth,
-  passport.authenticate("github", { failureRedirect: "/auth/github/failure" }),
+  passport.authenticate("github", { failureRedirect: "/auth/github/failure", session: false }),
   githubAuthCallback,
 );
 
 router.get("/github/failure", githubAuthFailure);
 
-router.get("/me", getCurrentUser);
+router.get("/me", attachAuthenticatedUser, getCurrentUser);
+router.post("/logout", logoutUser);
 router.get("/logout", logoutUser);
 
 export default router;

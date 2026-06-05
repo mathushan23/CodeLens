@@ -3,7 +3,7 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import passport from "passport";
 import { Strategy as GitHubStrategy } from "passport-github2";
-import { findUserById, upsertGithubUser } from "../models/userModel.js";
+import { upsertGithubUser } from "../models/userModel.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,19 +18,6 @@ const isConfiguredValue = (value) => {
 const githubAuthEnabled =
   isConfiguredValue(process.env.GITHUB_CLIENT_ID) &&
   isConfiguredValue(process.env.GITHUB_CLIENT_SECRET);
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await findUserById(id);
-    done(null, user || null);
-  } catch (error) {
-    done(error, null);
-  }
-});
 
 const callbackURL = `${process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`}/auth/github/callback`;
 
